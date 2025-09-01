@@ -132,6 +132,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="DeviceResources.h" />
+    <ClInclude Include="Keyboard.h" />
     <ClInclude Include="TorchadeException.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Resource.h" />
@@ -139,6 +140,7 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="TorchadeException.cpp" />
     <ClCompile Include="Torchade.cpp" />
     <ClCompile Include="Window.cpp" />

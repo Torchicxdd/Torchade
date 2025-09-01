@@ -1,5 +1,6 @@
 #include "Window.h"
 #include <sstream>
+#include "Resource.h"
 
 Window::WindowClass Window::WindowClass::wndClass;
 
@@ -14,12 +15,12 @@ Window::WindowClass::WindowClass() noexcept : hInst(GetModuleHandle(nullptr))
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = 0;
     wcex.hInstance = GetInstance();
-    wcex.hIcon = nullptr;
+    wcex.hIcon = static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(IDI_TORCHADE), IMAGE_ICON, 32, 32, 0));
     wcex.hCursor = nullptr;
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName = nullptr;
     wcex.lpszClassName = GetName();
-    wcex.hIconSm = nullptr;
+    wcex.hIconSm = static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(IDI_TORCHADE), IMAGE_ICON, 16, 16, 0));;
 
     RegisterClassExW(&wcex);
 }
@@ -47,7 +48,10 @@ Window::Window(int width, int height, const WCHAR* name) noexcept
     wr.right = width + wr.left;
     wr.top = 100;
     wr.bottom = height + wr.top;
-    AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
+    if (FAILED(AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE)))
+    {
+        throw TORCHWND_LAST_EXCEPT();
+    }
 
     // Create window and get window handle
     hWnd = CreateWindow(
@@ -56,6 +60,11 @@ Window::Window(int width, int height, const WCHAR* name) noexcept
         CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
         nullptr, nullptr, WindowClass::GetInstance(), this
     );
+
+    if (hWnd == nullptr)
+    {
+        throw TORCHWND_LAST_EXCEPT();
+    }
 
     ShowWindow(hWnd, SW_SHOWDEFAULT);
 }
@@ -96,6 +105,23 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) n
     case WM_CLOSE:
         PostQuitMessage(0);
         return 0; // We destroy our window from our destructor
+
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
+        if (!(lParam & 0x40000000) || kbd.AutorepeatIsEnabled()) {
+            kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
+        }
+        break;
+    case WM_KEYUP:
+    case WM_SYSKEYUP:
+        kbd.OnKeyReleased(static_cast<unsigned char>(wParam));
+        break;
+    case WM_CHAR:
+        kbd.OnChar(static_cast<unsigned char>(wParam));
+        break;
+    case WM_KILLFOCUS:
+        kbd.ClearState();
+        break;
     }
 
     return DefWindowProc(hWnd, message, wParam, lParam);

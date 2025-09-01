@@ -1,6 +1,7 @@
 #pragma once
 #include "framework.h"
 #include "TorchadeException.h"
+#include "Keyboard.h"
 
 class Window
 {
@@ -41,6 +42,8 @@ private:
 	static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept;
+public:
+	Keyboard kbd;
 private:
 	int width;
 	int height;
@@ -49,3 +52,4 @@ private:
 
 // Error exception helper macro
 #define TORCHWND_EXCEPT(hr) Window::Exception(__LINE__, __FILE__, hr)
+#define TORCHWND_LAST_EXCEPT() Window::Exception(__LINE__, __FILE__, GetLastError())

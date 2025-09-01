@@ -21,6 +21,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
+            if (wnd.kbd.KeyIsPressed(VK_MENU)) {
+                MessageBoxA(nullptr, "CHICKEN JOCKEY", "Alt was clicked", 0u);
+            }
         }
 
         if (gResult == -1)
