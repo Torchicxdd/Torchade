@@ -1,8 +1,5 @@
 // Torchade.cpp : Defines the entry point for the application.
-//
-
-#include "Window.h"
-#include <sstream>
+#include "App.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -14,25 +11,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     
     try
     {
-        Window wnd(800, 300, L"Torchade");
-
-        MSG msg;
-        BOOL gResult;
-
-        int scroll = 0;
-
-        while ((gResult = GetMessage(&msg, nullptr, 0U, 0U)) > 0)
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-
-        if (gResult == -1)
-        {
-            return -1;
-        }
-
-        return msg.wParam;
+        return App{}.Go();
     }
     catch (const TorchadeException& e)
     {

@@ -83,6 +83,19 @@ void Window::SetTitle(const std::string title) {
     }
 }
 
+std::optional<int> Window::ProcessMessages() {
+    MSG msg;
+    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+        if (msg.message == WM_QUIT) {
+            return msg.wParam;
+        }
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return {};
+}
+
 LRESULT CALLBACK Window::HandleMsgSetup(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     // Checks to see if a window is to be created so we can store a window class pointer
