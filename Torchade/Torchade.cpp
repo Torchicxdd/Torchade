@@ -2,6 +2,7 @@
 //
 
 #include "Window.h"
+#include <sstream>
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -17,13 +18,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         MSG msg;
         BOOL gResult;
+
+        int scroll = 0;
+
         while ((gResult = GetMessage(&msg, nullptr, 0U, 0U)) > 0)
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-            if (wnd.kbd.KeyIsPressed(VK_MENU)) {
-                MessageBoxA(nullptr, "CHICKEN JOCKEY", "Alt was clicked", 0u);
-            }
         }
 
         if (gResult == -1)

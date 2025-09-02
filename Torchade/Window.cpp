@@ -41,6 +41,9 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 }
 
 Window::Window(int width, int height, const WCHAR* name) noexcept
+    :
+    width(width),
+    height(height)
 {
     // Calculate window size
     RECT wr;
@@ -48,7 +51,7 @@ Window::Window(int width, int height, const WCHAR* name) noexcept
     wr.right = width + wr.left;
     wr.top = 100;
     wr.bottom = height + wr.top;
-    if (FAILED(AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE)))
+    if (AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE) == 0)
     {
         throw TORCHWND_LAST_EXCEPT();
     }
@@ -72,6 +75,12 @@ Window::Window(int width, int height, const WCHAR* name) noexcept
 Window::~Window()
 {
     DestroyWindow(hWnd);
+}
+
+void Window::SetTitle(const std::string title) {
+    if (SetWindowTextA(hWnd, title.c_str()) == 0) {
+        throw TORCHWND_LAST_EXCEPT();
+    }
 }
 
 LRESULT CALLBACK Window::HandleMsgSetup(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -100,28 +109,92 @@ LRESULT CALLBACK Window::HandleMsgThunk(HWND hWnd, UINT message, WPARAM wParam, 
 
 LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 {
-    switch (message)
-    {
-    case WM_CLOSE:
-        PostQuitMessage(0);
-        return 0; // We destroy our window from our destructor
-
-    case WM_KEYDOWN:
-    case WM_SYSKEYDOWN:
-        if (!(lParam & 0x40000000) || kbd.AutorepeatIsEnabled()) {
-            kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
+    switch (message) {
+        case WM_CLOSE:
+        {
+            PostQuitMessage(0);
+            return 0; // We destroy our window from our destructor
         }
-        break;
-    case WM_KEYUP:
-    case WM_SYSKEYUP:
-        kbd.OnKeyReleased(static_cast<unsigned char>(wParam));
-        break;
-    case WM_CHAR:
-        kbd.OnChar(static_cast<unsigned char>(wParam));
-        break;
-    case WM_KILLFOCUS:
-        kbd.ClearState();
-        break;
+
+        // Keyboard Messages
+        case WM_KEYDOWN:
+        case WM_SYSKEYDOWN:
+        {
+            if (!(lParam & 0x40000000) || kbd.AutorepeatIsEnabled()) {
+                kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
+            }
+            break;
+        }
+        case WM_KEYUP:
+        case WM_SYSKEYUP:
+        {
+            kbd.OnKeyReleased(static_cast<unsigned char>(wParam));
+            break;
+        }
+        case WM_CHAR:
+        {
+            kbd.OnChar(static_cast<unsigned char>(wParam));
+            break;
+        }
+        case WM_KILLFOCUS:
+        {
+            kbd.ClearState();
+            break;
+        }
+
+        // Mouse Messages
+        case WM_MOUSEMOVE:
+        {
+            const POINTS pt = MAKEPOINTS(lParam);
+            if (pt.x >= 0 && pt.x < width && pt.y >= 0 && pt.y < height) {
+                mouse.OnMouseMove(pt.x, pt.y);
+                if (!mouse.IsInWindow()) {
+                    SetCapture(hWnd);
+                    mouse.OnMouseEnter();
+                }
+            }
+            else {
+                if (mouse.LeftIsPressed() || mouse.RightIsPressed()) {
+                    mouse.OnMouseMove(pt.x, pt.y);
+                }
+                else {
+                    ReleaseCapture();
+                    mouse.OnMouseLeave();
+                }
+            }
+            break;
+        }
+        case WM_LBUTTONDOWN:
+        {
+            const POINTS pt = MAKEPOINTS(lParam);
+            mouse.OnLeftPressed(pt.x, pt.y);
+            break;
+        }
+        case WM_LBUTTONUP:
+        {
+            const POINTS pt = MAKEPOINTS(lParam);
+            mouse.OnLeftReleased(pt.x, pt.y);
+            break;
+        }
+        case WM_RBUTTONDOWN:
+        {
+            const POINTS pt = MAKEPOINTS(lParam);
+            mouse.OnRightPressed(pt.x, pt.y);
+            break;
+        }
+        case WM_RBUTTONUP:
+        {
+            const POINTS pt = MAKEPOINTS(lParam);
+            mouse.OnRightReleased(pt.x, pt.y);
+            break;
+        }
+        case WM_MOUSEWHEEL:
+        {
+            const POINTS pt = MAKEPOINTS(lParam);
+            const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+            mouse.OnWheelDelta(pt.x, pt.y, delta);
+            break;
+        }
     }
 
     return DefWindowProc(hWnd, message, wParam, lParam);
