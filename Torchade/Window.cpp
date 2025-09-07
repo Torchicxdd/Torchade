@@ -40,7 +40,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
     return wndClass.hInst;
 }
 
-Window::Window(int width, int height, const WCHAR* name) noexcept
+Window::Window(int width, int height, const WCHAR* name)
     :
     width(width),
     height(height)
@@ -69,7 +69,11 @@ Window::Window(int width, int height, const WCHAR* name) noexcept
         throw TORCHWND_LAST_EXCEPT();
     }
 
+    // New window starts off as hidden
     ShowWindow(hWnd, SW_SHOWDEFAULT);
+
+    // Create the graphics object
+    pGraphics = std::make_unique<Graphics>(hWnd);
 }
 
 Window::~Window()
@@ -83,7 +87,7 @@ void Window::SetTitle(const std::string title) {
     }
 }
 
-std::optional<int> Window::ProcessMessages() {
+std::optional<int> Window::ProcessMessages() noexcept {
     MSG msg;
     while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
         if (msg.message == WM_QUIT) {
@@ -94,6 +98,13 @@ std::optional<int> Window::ProcessMessages() {
     }
 
     return {};
+}
+
+Graphics& Window::GetGraphics() {
+    if (!pGraphics) {
+        throw TORCHWND_NOGRAPHICS_EXCEPT();
+    }
+    return *pGraphics;
 }
 
 LRESULT CALLBACK Window::HandleMsgSetup(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -213,32 +224,10 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) n
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-Window::Exception::Exception(int line, const char* file, HRESULT hr) noexcept
-    :
-    TorchadeException(line, file),
-    hr(hr)
-{}
-
-const char* Window::Exception::what() const noexcept
-{
-    std::ostringstream oss;
-    oss << GetType() << std::endl
-        << "[Error Code] " << GetErrorCode() << std::endl
-        << "[Description " << GetErrorString() << std::endl
-        << GetOriginString();
-    whatBuffer = oss.str();
-    return whatBuffer.c_str();
-}
-
-const char* Window::Exception::GetType() const noexcept
-{
-    return "Torchade Window Exception";
-}
-
 std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 {
     char* pMsgBuf = nullptr;
-    DWORD nMsgLen = FormatMessageA(
+    const DWORD nMsgLen = FormatMessageA(
         FORMAT_MESSAGE_ALLOCATE_BUFFER |
         FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         nullptr, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
@@ -253,12 +242,36 @@ std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
     return errorString;
 }
 
-HRESULT Window::Exception::GetErrorCode() const noexcept
-{
+Window::HrException::HrException(int line, const char* file, HRESULT hr) noexcept
+    :
+    Exception(line, file),
+    hr(hr)
+{}
+
+const char* Window::HrException::what() const noexcept {
+    std::ostringstream oss;
+    oss << GetType() << std::endl
+        << "[Error Code] 0x" << std::hex << std::uppercase << GetErrorCode()
+        << std::dec << " (" << (unsigned long)GetErrorCode() << ")" << std::endl
+        << "[Description] " << GetErrorDescription() << std::endl
+        << GetOriginString();
+    whatBuffer = oss.str();
+    return whatBuffer.c_str();
+}
+
+const char* Window::HrException::GetType() const noexcept {
+    return "Torchade Window Exception";
+}
+
+HRESULT Window::HrException::GetErrorCode() const noexcept {
     return hr;
 }
 
-std::string Window::Exception::GetErrorString() const noexcept
+std::string Window::HrException::GetErrorDescription() const noexcept
 {
-    return TranslateErrorCode(hr);
+    return Exception::TranslateErrorCode(hr);
+}
+
+const char* Window::NoGraphicsException::GetType() const noexcept {
+    return "Torchade Window Exception [No Graphics]";
 }

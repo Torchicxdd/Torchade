@@ -133,8 +133,11 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="DeviceResources.h" />
+    <ClInclude Include="dxerr.h" />
+    <ClInclude Include="Graphics.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="Timer.h" />
     <ClInclude Include="TorchadeException.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Resource.h" />
@@ -143,8 +146,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="dxerr.cpp" />
+    <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="TorchadeException.cpp" />
     <ClCompile Include="Torchade.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -155,6 +161,11 @@
   <ItemGroup>
     <Image Include="small.ico" />
     <Image Include="Torchade.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DXGetErrorDescription.inl" />
+    <None Include="DXGetErrorString.inl" />
+    <None Include="DXTrace.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
