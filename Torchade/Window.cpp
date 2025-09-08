@@ -91,7 +91,7 @@ std::optional<int> Window::ProcessMessages() noexcept {
     MSG msg;
     while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
         if (msg.message == WM_QUIT) {
-            return msg.wParam;
+            return std::optional<int>(static_cast<int>(msg.wParam));
         }
         TranslateMessage(&msg);
         DispatchMessage(&msg);
