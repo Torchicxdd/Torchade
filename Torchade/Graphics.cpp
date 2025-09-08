@@ -2,6 +2,8 @@
 #include "dxerr.h"
 #include <sstream>
 
+namespace wrl = Microsoft::WRL;
+
 // Sets the linker settings for us
 #pragma comment(lib, "d3d11.lib")
 
@@ -62,25 +64,9 @@ Graphics::Graphics(HWND hWnd) {
 	));
 
 	// Gain access to texture subresource in swap chain (back buffer)
-	ID3D11Resource* pBackBuffer = nullptr;
-	GFX_THROW_INFO(pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer)));
-	GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &pTarget));
-	pBackBuffer->Release();
-}
-
-Graphics::~Graphics() {
-	if (pTarget != nullptr) {
-		pTarget->Release();
-	}
-	if (pContext != nullptr) {
-		pContext->Release();
-	}
-	if (pSwapChain != nullptr) {
-		pSwapChain->Release();
-	}
-	if (pDevice != nullptr) {
-		pDevice->Release();
-	}
+	wrl::ComPtr<ID3D11Resource> pBackBuffer;
+	GFX_THROW_INFO(pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
+	GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pTarget));
 }
 
 void Graphics::EndFrame() {
@@ -101,7 +87,7 @@ void Graphics::EndFrame() {
 
 void Graphics::ClearBuffer(float r, float g, float b) noexcept {
 	const float color[] = { r, g, b, 1.0f };
-	pContext->ClearRenderTargetView(pTarget, color);
+	pContext->ClearRenderTargetView(pTarget.Get(), color);
 }
 
 Graphics::HrException::HrException(int line, const char* file, HRESULT hr, std::vector<std::string> infoMsgs) noexcept
