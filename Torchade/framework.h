@@ -14,3 +14,4 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+#include <dxgi1_2.h>

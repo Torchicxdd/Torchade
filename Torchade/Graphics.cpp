@@ -67,6 +67,26 @@ Graphics::Graphics(HWND hWnd) {
 		&pContext
 	));
 
+	// Get Monitor Output
+	wrl::ComPtr<IDXGIDevice> pDXGIDevice;
+	GFX_THROW_INFO(pDevice.As(&pDXGIDevice));
+
+	wrl::ComPtr<IDXGIAdapter> pAdapter;
+	GFX_THROW_INFO(pDXGIDevice->GetAdapter(&pAdapter));
+
+	wrl::ComPtr<IDXGIOutput> pOutput;
+	GFX_THROW_INFO(pAdapter->EnumOutputs(0, &pOutput)); // Get First Monitor
+
+	wrl::ComPtr<IDXGIOutput1> pOutput1;
+	GFX_THROW_INFO(pOutput.As(&pOutput1));
+
+	// Create Duplication Manager and get frame
+	pDuplicationManager = std::make_unique<DuplicationManager>(pDevice, pOutput1);
+
+	wrl::ComPtr<ID3D11Texture2D> frameTex;
+	pDuplicationManager->GetFrame(16, frameTex);
+	pDuplicationManager->ReleaseFrame();
+
 	// Gain access to texture subresource in swap chain (back buffer)
 	wrl::ComPtr<ID3D11Resource> pBackBuffer;
 	GFX_THROW_INFO(pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
@@ -147,7 +167,6 @@ void Graphics::DrawTestTriangle() {
 
 	// Bind Vertex Shader
 	pContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
-
 
 	// Input (vertex) layout (2d position only)
 	wrl::ComPtr<ID3D11InputLayout> pInputLayout;

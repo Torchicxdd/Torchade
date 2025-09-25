@@ -3,12 +3,9 @@
 #include "TorchadeException.h"
 #include <d3d11.h>
 #include <wrl.h>
-#include <vector>
 #include "DxgiInfoManager.h"
-#include "DuplicationManager.h"
-#include <memory>
 
-class Graphics {
+class DuplicationManager {
 public:
 	class Exception : public TorchadeException {
 		using TorchadeException::TorchadeException;
@@ -35,28 +32,16 @@ public:
 	private:
 		std::string info;
 	};
-	class DeviceRemovedException : public HrException {
-		using HrException::HrException;
-	public:
-		const char* GetType() const noexcept override;
-	private:
-		std::string reason;
-	};
 public:
-	Graphics(HWND hWnd);
-	Graphics(const Graphics&) = delete;
-	Graphics& operator=(const Graphics&) = delete;
-	~Graphics() = default;
-	void EndFrame();
-	void ClearBuffer(float r, float g, float b) noexcept;
-	void DrawTestTriangle();
+	DuplicationManager(Microsoft::WRL::ComPtr<ID3D11Device> pDevice, Microsoft::WRL::ComPtr<IDXGIOutput1> pOutput1);
+	DuplicationManager(const DuplicationManager&) = delete;
+	DuplicationManager& operator=(const DuplicationManager&) = delete;
+	~DuplicationManager() = default;
+	void GetFrame(UINT timeoutMs, Microsoft::WRL::ComPtr<ID3D11Texture2D>& pOutTex);
+	void ReleaseFrame();
 private:
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;
 #endif
-	Microsoft::WRL::ComPtr<ID3D11Device> pDevice;
-	Microsoft::WRL::ComPtr<IDXGISwapChain> pSwapChain;
-	Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;
-	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> pTarget;
-	std::unique_ptr<DuplicationManager> pDuplicationManager;
+	Microsoft::WRL::ComPtr<IDXGIOutputDuplication> pOutputDuplication;
 };
