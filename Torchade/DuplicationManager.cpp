@@ -15,17 +15,16 @@ namespace wrl = Microsoft::WRL;
 #ifndef NDEBUG
 #define DUP_EXCEPT(hr) DuplicationManager::HrException(__LINE__, __FILE__, (hr), infoManager.GetMessages())
 #define DUP_THROW_INFO(hrcall) infoManager.Set(); if (FAILED(hr = (hrcall))) throw DUP_EXCEPT(hr)
-#define DUP_DEVICE_REMOVED_EXCEPT(hr) DuplicationManager::DeviceRemovedException(__LINE__, __FILE__, (hr), infoManager.GetMessages())
 #define DUP_THROW_INFO_ONLY(call) infoManager.Set(); (call); {auto v = infoManager.GetMessages(); if (!v.empty()) {throw DuplicationManager::InfoException(__LINE__, __FILE__, v);}}
 #else
 #define DUP_EXCEPT(hr) DuplicationManager::HrException(__LINE__, __FILE__, (hr))
 #define DUP_THROW_INFO(hrcall) throw DUP_THROW_NOINFO(hr)
-#define DUP_DEVICE_REMOVED_EXCEPT(hr) DuplicationManager::DeviceRemovedException(__LINE__, __FILE__, (hr))
 #define DUP_THROW_INFO_ONLY(call) (call)
 #endif
 
 DuplicationManager::DuplicationManager(wrl::ComPtr<ID3D11Device> pDevice, wrl::ComPtr<IDXGIOutput1> pOutput1) {
-	pOutput1->DuplicateOutput(pDevice.Get(), &pOutputDuplication);
+	HRESULT hr;
+	DUP_THROW_INFO(pOutput1->DuplicateOutput(pDevice.Get(), &pOutputDuplication));
 }
 
 void DuplicationManager::GetFrame(UINT timeoutMs, wrl::ComPtr<ID3D11Texture2D>& pOutTex) {
@@ -40,7 +39,8 @@ void DuplicationManager::GetFrame(UINT timeoutMs, wrl::ComPtr<ID3D11Texture2D>& 
 }
 
 void DuplicationManager::ReleaseFrame() {
-	pOutputDuplication->ReleaseFrame();
+	HRESULT hr;
+	DUP_THROW_INFO(pOutputDuplication->ReleaseFrame());
 }
 
 DuplicationManager::HrException::HrException(int line, const char* file, HRESULT hr, std::vector<std::string> infoMsgs) noexcept

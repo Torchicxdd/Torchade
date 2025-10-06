@@ -46,10 +46,10 @@ public:
 	Graphics(HWND hWnd);
 	Graphics(const Graphics&) = delete;
 	Graphics& operator=(const Graphics&) = delete;
-	~Graphics() = default;
+	~Graphics();
 	void EndFrame();
 	void ClearBuffer(float r, float g, float b) noexcept;
-	void DrawTestTriangle();
+	void DrawTestTriangle(float angle, float x, float y);
 private:
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;
